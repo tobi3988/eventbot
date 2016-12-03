@@ -28,55 +28,42 @@ controller.hears(
     }
 );
 
-function getEventsAndReply(bot, message, date, category) {
-    var queryparams = {};
-    if (category) {
-        queryparams = {date: date, category: category}
-    } else {
-        queryparams = {date: date}
-    }
+function getEventsAndReply(bot, message, query) {
+  request
+    .get('https://tsri.ch/api/v0/agenda/')
+    .query(query)
+    .auth(process.env.TSRI_USER, process.env.TSRI_PW)
+    .end(function (err, res) {
 
-    request
-        .get('https://tsri.ch/api/v0/agenda/?date=' + date + '')
-        .query(queryparams)
-        .auth(process.env.TSRI_USER, process.env.TSRI_PW)
-        .end(function (err, res) {
+      var events = res.body.objects;
+      if (events.length > 0) {
 
-            var events = res.body.objects;
-            if (events.length > 0) {
+        bot.startConversation(message, function (err, convo) {
 
-                bot.startConversation(message, function (err, convo) {
+          convo.say("Ich habe " + events.length + " Events gefunden.");
 
-                    convo.say("Ich habe " + events.length + " Events gefunden.");
+          for (var i = 0, len=Math.min(events.length, 3); i < len; i++) {
 
-                    for (var i = 0; i < 3 && events.length > i; i++) {
-
-                        var reply_with_attachments = {
-                            'username': 'Eventbot',
-                            'text': '',
-                            'attachments': [
-                                {
-                                    'fallback': 'To be useful, I need you to invite me in a channel.',
-                                    'title': events[i].title + ' (' + events[i].pretty_time + ')',
-                                    'text': events[i].description,
-                                    'color': '#7CD197'
-                                }
-                            ],
-                            'icon_url': events[i].image
-                        }
-                        convo.say( reply_with_attachments);
-                    }
-                });
-            } else {
-                convo.say( 'Sorry, es läuft nichts');
+            var reply_with_attachments = {
+              'username': 'Eventbot',
+              'text': '',
+              'attachments': [
+                {
+                  'fallback': 'To be useful, I need you to invite me in a channel.',
+                  'title': events[i].title + ' (' + events[i].pretty_time + ')',
+                  'text': events[i].description,
+                  'color': '#7CD197'
+                }
+              ],
+              'icon_url': events[i].image
             }
+            convo.say( reply_with_attachments);
+          }
         });
-}
-
-function replyEventsToday(bot, message) {
-    var today = new Date().toISOString().slice(0, 10);
-    var category = getCategory(message.text);
-    getEventsAndReply(bot, message, today, category);
+      } else {
+        convo.say( 'Sorry, es läuft nichts');
+      }
+    });
 }
 
 const days_of_the_week = [
@@ -89,66 +76,64 @@ const days_of_the_week = [
     /(samscht.g?|samstag)/i,
 ];
 
-function getCategory(text) {
-    var category = '';
-    if (/konzert/i.test(text)) {
-        category = 'konzert'
+function getMoment(text) {
+  if (/(heute|hüt)/i.test(text)) {
+    return moment();
+  } else if (/(morgen|morn)/i.test(text)) {
+    return moment().add(1, 'days');
+  } else {
+    for (var i = 0; i < days_of_the_week.length; ++i) {
+      if (days_of_the_week[i].test(text)) {
+        return moment().day(7 + i);
+      }
     }
-    if (/divers.*/i.test(text)) {
-        category = 'diverses'
-    }
-    if (/kino/i.test(text)) {
-        category = 'kino'
-    }
-    if (/dis(k|c)o/i.test(text)) {
-        category = 'disko'
-    }
-    if (/theater/i.test(text)) {
-        category = 'theater'
-    }
-    if (/ausstellung/i.test(text)) {
-        category = 'ausstellung'
-    }
-    if (/diskussion/i.test(text)) {
-        category = 'diskussion'
-    }
-    return category
+  }
+  return null;
 }
+
+function getCategory(text) {
+  if (/konzert/i.test(text)) {
+    return 'konzert';
+  }
+  if (/divers.*/i.test(text)) {
+    return 'diverses';
+  }
+  if (/kino/i.test(text)) {
+    return 'kino';
+  }
+  if (/dis(k|c)o/i.test(text)) {
+    return 'disko';
+  }
+  if (/theater/i.test(text)) {
+    return 'theater';
+  }
+  if (/ausstellung/i.test(text)) {
+    return 'ausstellung';
+  }
+  if (/diskussion/i.test(text)) {
+    return 'diskussion';
+  }
+}
+
 controller.hears(
-    ['.*'],
-    ['direct_message', 'direct_mention'],
-    function (bot, message) {
-        if (/(heute|hüt)/i.test(message.text)) {
-            replyEventsToday(bot, message);
-            return;
-        } else if (/(morgen|morn)/i.test(message.text)) {
-            var category = getCategory(message.text);
-            var date = new Date();
-            date.setDate(date.getDate() + 1);
-            var tomorrow = date.toISOString().slice(0, 10);
-            getEventsAndReply(bot, message, tomorrow, '');
-            return;
-        } else {
-            var now = moment();
+  ['.*'],
+  ['direct_message', 'direct_mention'],
+  function (bot, message) {
+    var query = {},
+      category = getCategory(message.text),
+      day = getMoment(message.text);
 
-            for (var i = 0; i < days_of_the_week.length; ++i) {
-                if (days_of_the_week[i].test(message.text)) {
-                    now.day(7 + i);
-                    var category = getCategory(message.text);
-                    getEventsAndReply(bot, message, now.format('YYYY-MM-DD'), category);
-                    return;
-                }
-            }
-        }
+    if (category) query.category = category;
+    if (day) query.date = day.format('YYYY-MM-DD');
 
-        bot.reply(message, 'Sorry, säg nomau.')
-    }
+    getEventsAndReply(bot, message, query);
+  }
 );
 
 controller.hears(
-    ['was l.*ft'],
-    ['ambient'],
-    function (bot, message) {
-        replyEventsToday(bot, message);
-    }
+  ['was l.*ft'],
+  ['ambient'],
+  function (bot, message) {
+    getEventsAndReply(bot, message, {date: moment().format('YYYY-MM-DD')});
+  }
 );
