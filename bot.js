@@ -29,11 +29,11 @@ controller.hears(
 );
 
 function getEventsAndReply(bot, message, date, category) {
-    var queryparams ={};
-    if(category){
-        queryparams={date: date, category: category}
+    var queryparams = {};
+    if (category) {
+        queryparams = {date: date, category: category}
     } else {
-        queryparams={date: date}
+        queryparams = {date: date}
     }
 
     request
@@ -43,28 +43,32 @@ function getEventsAndReply(bot, message, date, category) {
         .end(function (err, res) {
 
             var events = res.body.objects;
-            if(events.length > 0){
-                bot.reply(message, "Ich habe " + events.length + " Events gefunden.");
+            if (events.length > 0) {
 
-                for(var i=0; i<3 && events.length >i; i++) {
+                bot.startConversation(message, function (err, convo) {
 
-                    var reply_with_attachments = {
-                        'username': 'Eventbot',
-                        'text': 'Der ' + (i + 1) +'. Event:',
-                        'attachments': [
-                            {
-                                'fallback': 'To be useful, I need you to invite me in a channel.',
-                                'title': events[i].title + ' ('+ events[i].pretty_time + ')' ,
-                                'text': events[i].description,
-                                'color': '#7CD197'
-                            }
-                        ],
-                        'icon_url': events[i].image
+                    convo.say("Ich habe " + events.length + " Events gefunden.");
+
+                    for (var i = 0; i < 3 && events.length > i; i++) {
+
+                        var reply_with_attachments = {
+                            'username': 'Eventbot',
+                            'text': '',
+                            'attachments': [
+                                {
+                                    'fallback': 'To be useful, I need you to invite me in a channel.',
+                                    'title': events[i].title + ' (' + events[i].pretty_time + ')',
+                                    'text': events[i].description,
+                                    'color': '#7CD197'
+                                }
+                            ],
+                            'icon_url': events[i].image
+                        }
+                        convo.say( reply_with_attachments);
                     }
-                    bot.reply(message, reply_with_attachments);
-                }
+                });
             } else {
-                bot.reply(message, 'Sorry, es läuft nichts');
+                convo.say( 'Sorry, es läuft nichts');
             }
         });
 }
@@ -76,36 +80,36 @@ function replyEventsToday(bot, message) {
 }
 
 const days_of_the_week = [
-  /(sunntig?|sonntag)/i,
-  /(mänt(i|a)g?|montag)/i,
-  /(dienstag|zischt(i|a)g?)/i,
-  /(mittw.ch)/i,
-  /(d.nn?schtig?|donnerstag)/i,
-  /(frit.g?|freitag)/i,
-  /(samscht.g?|samstag)/i,
+    /(sunntig?|sonntag)/i,
+    /(mänt(i|a)g?|montag)/i,
+    /(dienstag|zischt(i|a)g?)/i,
+    /(mittw.ch)/i,
+    /(d.nn?schtig?|donnerstag)/i,
+    /(frit.g?|freitag)/i,
+    /(samscht.g?|samstag)/i,
 ];
 
 function getCategory(text) {
     var category = '';
-    if(/konzert/i.test(text)){
+    if (/konzert/i.test(text)) {
         category = 'konzert'
     }
-    if(/divers.*/i.test(text)){
+    if (/divers.*/i.test(text)) {
         category = 'diverses'
     }
-    if(/kino/i.test(text)){
+    if (/kino/i.test(text)) {
         category = 'kino'
     }
-    if(/dis(k|c)o/i.test(text)){
+    if (/dis(k|c)o/i.test(text)) {
         category = 'disko'
     }
-    if(/theater/i.test(text)){
+    if (/theater/i.test(text)) {
         category = 'theater'
     }
-    if(/ausstellung/i.test(text)){
+    if (/ausstellung/i.test(text)) {
         category = 'ausstellung'
     }
-    if(/diskussion/i.test(text)){
+    if (/diskussion/i.test(text)) {
         category = 'diskussion'
     }
     return category
@@ -127,7 +131,7 @@ controller.hears(
         } else {
             var now = moment();
 
-            for (var i=0; i<days_of_the_week.length; ++i) {
+            for (var i = 0; i < days_of_the_week.length; ++i) {
                 if (days_of_the_week[i].test(message.text)) {
                     now.day(7 + i);
                     var category = getCategory(message.text);
