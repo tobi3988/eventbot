@@ -16,15 +16,7 @@ controller.hears(
     ['hey'],
     ['ambient'],
     function (bot, message) {
-        bot.api.users.info(
-            {user: message.user},
-            function (error, response) {
-                console.log(response.user);
-                bot.reply(message, '@' + response.user.name + ' hey!');
-            }
-        );
-        // console.log(info);
-        // bot.reply(message, 'Hey ' + message.user);
+      bot.reply(message, '<@' + message.user + '> hey!');
     }
 );
 
