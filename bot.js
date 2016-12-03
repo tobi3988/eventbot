@@ -1,6 +1,7 @@
 var Botkit = require('botkit');
 var controller = Botkit.slackbot();
 var request = require('superagent');
+var moment = require('moment');
 
 controller.spawn({
     token: process.env.EVENT_BOT_TOKEN
@@ -64,22 +65,43 @@ function replyEventsToday(bot, message) {
     var today = new Date().toISOString().slice(0, 10);
     getEventsAndReply(bot, message, today);
 }
-controller.hears(
-    ['heute', 'hüt'],
-    ['direct_message', 'direct_mention'],
-    function (bot, message) {
-        replyEventsToday(bot, message);
-    }
-);
+
+const days_of_the_week = [
+  /(sunntig?|sonntag)/i,
+  /(mäntig?|montag)/i,
+  /(dienstag)/i,
+  /(mittwoch)/i,
+  /(donnschtig?|donnerstag)/i,
+  /(frit.g?|freitag)/i,
+  /(samscht.g?|samstag)/i,
+];
 
 controller.hears(
-    ['morgen', 'morn'],
+    ['.*'],
     ['direct_message', 'direct_mention'],
     function (bot, message) {
-        var date = new Date();
-        date.setDate(date.getDate() + 1);
-        var tomorrow = date.toISOString().slice(0, 10);
-        getEventsAndReply(bot, message, tomorrow);
+        if (/(heute|hüt)/i.test(message.text)) {
+            replyEventsToday(bot, message);
+            return;
+        } else if (/(morgen|morn)/i.test(message.text)) {
+            var date = new Date();
+            date.setDate(date.getDate() + 1);
+            var tomorrow = date.toISOString().slice(0, 10);
+            getEventsAndReply(bot, message, tomorrow);
+            return;
+        } else {
+            var now = moment();
+
+            for (var i=0; i<days_of_the_week.length; ++i) {
+                if (days_of_the_week[i].test(message.text)) {
+                    now.day(7 + i);
+                    getEventsAndReply(bot, message, now.format('YYYY-MM-DD'));
+                    return;
+                }
+            }
+        }
+
+        bot.reply(message, 'Sorry, säg nomau.')
     }
 );
 
@@ -90,4 +112,3 @@ controller.hears(
         replyEventsToday(bot, message);
     }
 );
-
