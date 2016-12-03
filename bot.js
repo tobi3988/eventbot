@@ -32,7 +32,7 @@ function getEventsAndReply(bot, message, query) {
 
         bot.startConversation(message, function (err, convo) {
 
-          convo.say("Ich habe " + events.length + " Events gefunden.");
+          convo.say("<@" + message.user + ">, ich habe " + events.length + " Events gefunden.");
 
           for (var i = 0, len=Math.min(events.length, 3); i < len; i++) {
 
