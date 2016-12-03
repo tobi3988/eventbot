@@ -83,27 +83,19 @@ function getMoment(text) {
   return null;
 }
 
+const categories = [
+  ['konzert', /konzert/i],
+  ['diverses', /divers/i],
+  ['kino' , /kino/i],
+  ['disko', /dis(k|c)o/i],
+  ['theater', /theater/i],
+  ['ausstellung', /ausstellung/i],
+  ['diskussion', /diskussion/i],
+];
+
 function getCategory(text) {
-  if (/konzert/i.test(text)) {
-    return 'konzert';
-  }
-  if (/divers.*/i.test(text)) {
-    return 'diverses';
-  }
-  if (/kino/i.test(text)) {
-    return 'kino';
-  }
-  if (/dis(k|c)o/i.test(text)) {
-    return 'disko';
-  }
-  if (/theater/i.test(text)) {
-    return 'theater';
-  }
-  if (/ausstellung/i.test(text)) {
-    return 'ausstellung';
-  }
-  if (/diskussion/i.test(text)) {
-    return 'diskussion';
+  for (let [slug, matcher] of categories) {
+    if (matcher.test(text)) return slug;
   }
 }
 
