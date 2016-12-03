@@ -1,7 +1,7 @@
-var Botkit = require('botkit');
-var controller = Botkit.slackbot();
-var request = require('superagent');
-var moment = require('moment');
+const Botkit = require('botkit');
+const controller = Botkit.slackbot();
+const request = require('superagent');
+const moment = require('moment');
 
 controller.spawn({
     token: process.env.EVENT_BOT_TOKEN
@@ -27,16 +27,16 @@ function getEventsAndReply(bot, message, query) {
     .auth(process.env.TSRI_USER, process.env.TSRI_PW)
     .end(function (err, res) {
 
-      var events = res.body.objects;
+      let events = res.body.objects;
       if (events.length > 0) {
 
         bot.startConversation(message, function (err, convo) {
 
           convo.say("<@" + message.user + ">, ich habe " + events.length + " Events gefunden.");
 
-          for (var i = 0, len=Math.min(events.length, 3); i < len; i++) {
+          for (let i = 0, len=Math.min(events.length, 3); i < len; i++) {
 
-            var reply_with_attachments = {
+            let reply_with_attachments = {
               'username': 'Eventbot',
               'text': '',
               'attachments': [
@@ -74,7 +74,7 @@ function getMoment(text) {
   } else if (/(morgen|morn)/i.test(text)) {
     return moment().add(1, 'days');
   } else {
-    for (var i = 0; i < days_of_the_week.length; ++i) {
+    for (let i = 0; i < days_of_the_week.length; ++i) {
       if (days_of_the_week[i].test(text)) {
         return moment().day(7 + i);
       }
@@ -111,7 +111,7 @@ controller.hears(
   ['.*'],
   ['direct_message', 'direct_mention'],
   function (bot, message) {
-    var query = {},
+    let query = {},
       category = getCategory(message.text),
       day = getMoment(message.text);
 
