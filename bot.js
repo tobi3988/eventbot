@@ -54,7 +54,7 @@ function getEventsAndReply(bot, message, date, category) {
                         'attachments': [
                             {
                                 'fallback': 'To be useful, I need you to invite me in a channel.',
-                                'title': events[i].title,
+                                'title': events[i].title + ' ('+ events[i].pretty_time + ')' ,
                                 'text': events[i].description,
                                 'color': '#7CD197'
                             }
@@ -95,6 +95,18 @@ function getCategory(text) {
     }
     if(/kino/i.test(text)){
         category = 'kino'
+    }
+    if(/dis(k|c)o/i.test(text)){
+        category = 'disko'
+    }
+    if(/theater/i.test(text)){
+        category = 'theater'
+    }
+    if(/ausstellung/i.test(text)){
+        category = 'ausstellung'
+    }
+    if(/diskussion/i.test(text)){
+        category = 'diskussion'
     }
     return category
 }
