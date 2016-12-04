@@ -36,7 +36,7 @@ function getEventsAndReply(bot, message, query) {
 
           for (let i = 0, len=Math.min(events.length, 3); i < len; i++) {
 
-            let reply_with_attachments = {
+            convo.say({
               'username': 'Eventbot',
               'text': '',
               'attachments': [
@@ -48,8 +48,7 @@ function getEventsAndReply(bot, message, query) {
                 }
               ],
               'icon_url': events[i].image
-            }
-            convo.say( reply_with_attachments);
+            });
           }
         });
       } else {
@@ -58,14 +57,14 @@ function getEventsAndReply(bot, message, query) {
     });
 }
 
-const days_of_the_week = [
-    /(sunntig?|sonntag)/i,
-    /(mänt(i|a)g?|montag)/i,
-    /(dienstag|zischt(i|a)g?)/i,
-    /(mittw.ch)/i,
-    /(d.nn?schtig?|donnerstag)/i,
-    /(frit.g?|freitag)/i,
-    /(samscht.g?|samstag)/i,
+const daysOfTheWeek = [
+  /(sunntig?|sonntag)/i,
+  /(mänt(i|a)g?|montag)/i,
+  /(dienstag|zischt(i|a)g?)/i,
+  /(mittw.ch)/i,
+  /(d.nn?schtig?|donnerstag)/i,
+  /(frit.g?|freitag)/i,
+  /(samscht.g?|samstag)/i,
 ];
 
 function getMoment(text) {
@@ -74,8 +73,8 @@ function getMoment(text) {
   } else if (/(morgen|morn)/i.test(text)) {
     return moment().add(1, 'days');
   } else {
-    for (let i = 0; i < days_of_the_week.length; ++i) {
-      if (days_of_the_week[i].test(text)) {
+    for (let i = 0; i < daysOfTheWeek.length; ++i) {
+      if (daysOfTheWeek[i].test(text)) {
         return moment().day(7 + i);
       }
     }
