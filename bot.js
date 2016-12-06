@@ -4,20 +4,20 @@ const request = require('superagent');
 const moment = require('moment');
 
 controller.spawn({
-    token: process.env.EVENT_BOT_TOKEN
+  token: process.env.EVENT_BOT_TOKEN
 }).startRTM(function (err, bot, payload) {
-    if (!err) return;
+  if (!err) return;
 
-    console.log(err);
-    throw new Error('Unable to connect to Slack');
+  console.log(err);
+  throw new Error('Unable to connect to Slack');
 });
 
 controller.hears(
-    ['hey'],
-    ['ambient'],
-    function (bot, message) {
-      bot.reply(message, '<@' + message.user + '> hey!');
-    }
+  ['hey'],
+  ['ambient'],
+  function (bot, message) {
+    bot.reply(message, '<@' + message.user + '> hey!');
+  }
 );
 
 function getEventsAndReply(bot, message, query) {
@@ -28,13 +28,13 @@ function getEventsAndReply(bot, message, query) {
     .end(function (err, res) {
 
       let events = res.body.objects;
-      if (events.length > 0) {
+      bot.startConversation(message, function (err, convo) {
+        if (events.length > 0) {
 
-        bot.startConversation(message, function (err, convo) {
 
           convo.say("<@" + message.user + ">, ich habe " + events.length + " Events gefunden.");
 
-          for (let i = 0, len=Math.min(events.length, 3); i < len; i++) {
+          for (let i = 0, len = Math.min(events.length, 3); i < len; i++) {
 
             convo.say({
               'username': 'Eventbot',
@@ -50,10 +50,12 @@ function getEventsAndReply(bot, message, query) {
               'icon_url': events[i].image
             });
           }
-        });
-      } else {
-        convo.say( 'Sorry, es läuft nichts');
-      }
+
+
+        } else {
+          convo.say('Sorry, es läuft nichts');
+        }
+      });
     });
 }
 
@@ -68,7 +70,7 @@ const daysOfTheWeek = [
 ];
 
 function getMoment(text) {
-  if (/(heute|hüt)/i.test(text)) {
+  if (/(heute|hüt|was l.*ft)/i.test(text)) {
     return moment();
   } else if (/(morgen|morn)/i.test(text)) {
     return moment().add(1, 'days');
@@ -85,7 +87,7 @@ function getMoment(text) {
 const categories = [
   ['konzert', /konzert/i],
   ['diverses', /divers/i],
-  ['kino' , /kino/i],
+  ['kino', /kino/i],
   ['disko', /dis(k|c)o/i],
   ['theater', /theater/i],
   ['ausstellung', /ausstellung/i],
@@ -98,6 +100,10 @@ function getCategory(text) {
   }
 }
 
+function replyMisunderstand(bot, message) {
+  bot.reply(message, "Sorry, ich hä di nit verstande.")
+}
+
 controller.hears(
   ['.*'],
   ['direct_message', 'direct_mention'],
@@ -108,8 +114,11 @@ controller.hears(
 
     if (category) query.category = category;
     if (day) query.date = day.format('YYYY-MM-DD');
-
-    getEventsAndReply(bot, message, query);
+    if (Object.keys(query).length > 0) {
+      getEventsAndReply(bot, message, query);
+    } else {
+      replyMisunderstand(bot, message);
+    }
   }
 );
 
