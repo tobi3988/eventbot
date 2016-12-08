@@ -44,10 +44,13 @@ function showMore(convo, events) {
     convo.ask('Willt nu meh events gseh?', function (response, convo) {
       events.splice(0, eventsPerPage);
 
-      if (/ja/i.test(response.text)) {
+      if (/ja|yes|jo/i.test(response.text)) {
         replyEvents(convo, events);
         convo.next();
         showMore(convo, events);
+      } else {
+        convo.say('ok');
+        convo.next();
       }
     });
 
