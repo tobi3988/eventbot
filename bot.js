@@ -3,6 +3,8 @@ const controller = Botkit.slackbot();
 const request = require('superagent');
 const moment = require('moment');
 
+const eventsPerPage = 3;
+
 controller.spawn({
   token: process.env.EVENT_BOT_TOKEN
 }).startRTM(function (err, bot, payload) {
@@ -19,6 +21,38 @@ controller.hears(
     bot.reply(message, '<@' + message.user + '> hey!');
   }
 );
+function replyEvents(convo, events) {
+
+  for (let i = 0, len = Math.min(events.length, eventsPerPage); i < len; i++) {
+    convo.say({
+      'username': 'Eventbot',
+      'text': '',
+      'attachments': [
+        {
+          'fallback': 'To be useful, I need you to invite me in a channel.',
+          'title': events[i].title + ' (' + events[i].pretty_time + ')',
+          'text': events[i].description,
+          'color': '#7CD197'
+        }
+      ],
+      'icon_url': events[i].image
+    });
+  }
+}
+function showMore(convo, events) {
+  if (events.length > eventsPerPage) {
+    convo.ask('Willt nu meh events gseh?', function (response, convo) {
+      events.splice(0, eventsPerPage);
+
+      if (/ja/i.test(response.text)) {
+        replyEvents(convo, events);
+        convo.next();
+        showMore(convo, events);
+      }
+    });
+
+  }
+}
 
 function getEventsAndReply(bot, message, query) {
   request
@@ -28,30 +62,12 @@ function getEventsAndReply(bot, message, query) {
     .end(function (err, res) {
 
       let events = res.body.objects;
+      let numberOfEvents = events.length;
       bot.startConversation(message, function (err, convo) {
-        if (events.length > 0) {
-
-
-          convo.say("<@" + message.user + ">, ich habe " + events.length + " Events gefunden.");
-
-          for (let i = 0, len = Math.min(events.length, 3); i < len; i++) {
-
-            convo.say({
-              'username': 'Eventbot',
-              'text': '',
-              'attachments': [
-                {
-                  'fallback': 'To be useful, I need you to invite me in a channel.',
-                  'title': events[i].title + ' (' + events[i].pretty_time + ')',
-                  'text': events[i].description,
-                  'color': '#7CD197'
-                }
-              ],
-              'icon_url': events[i].image
-            });
-          }
-
-
+        if (numberOfEvents > 0) {
+          convo.say("<@" + message.user + ">, ich habe " + numberOfEvents + " Events gefunden.");
+          replyEvents(convo, events);
+          showMore(convo, events);
         } else {
           convo.say('Sorry, es läuft nichts');
         }
