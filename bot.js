@@ -14,13 +14,6 @@ controller.spawn({
   throw new Error('Unable to connect to Slack');
 });
 
-controller.hears(
-  ['hey'],
-  ['ambient'],
-  function (bot, message) {
-    bot.reply(message, '<@' + message.user + '> hey!');
-  }
-);
 function replyEvents(convo, events) {
 
   for (let event of events.slice(0, eventsPerPage)) {
