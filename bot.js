@@ -23,22 +23,21 @@ controller.hears(
 );
 function replyEvents(convo, events) {
 
-  for (let i = 0, len = Math.min(events.length, eventsPerPage); i < len; i++) {
+  for (let event of events.slice(0, eventsPerPage)) {
     convo.say({
       'username': 'Eventbot',
-      'text': '',
       'attachments': [
         {
-          'fallback': 'To be useful, I need you to invite me in a channel.',
-          'title': events[i].title + ' (' + events[i].pretty_time + ')',
-          'text': events[i].description,
+          'title': event.title + ' (' + event.pretty_time + ')',
+          'text': event.description,
           'color': '#7CD197'
         }
       ],
-      'icon_url': events[i].image
+      'icon_url': event.image
     });
   }
 }
+
 function showMore(convo, events) {
   if (events.length > eventsPerPage) {
     convo.ask('Willt nu meh events gseh?', function (response, convo) {
